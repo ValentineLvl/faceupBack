@@ -6,6 +6,8 @@ var uniqid = require('uniqid');
 
 var cloudinary = require('cloudinary').v2;
 
+var request = require('sync-request');
+
 cloudinary.config({
  cloud_name: 'dqulnrq1a',
  api_key: '364443491521971',
@@ -23,9 +25,24 @@ router.post('/upload', async function(req, res, next) {
 
  if(!resultCopy) {
   var resultCloudinary = await cloudinary.uploader.upload(imageFile);
+  
   fs.unlinkSync(imageFile);
+  
+  var options = {
+    json: {
+      apiKey: "5c0a5d392c1745d2ae84dc0b1483bfd2",
+      image: resultCloudinary.url,
+    },
+   };
+   //console.log(resultCloudinary.url);
+   var resultDetectionRaw = await request('POST', 'https://lacapsule-faceapi.herokuapp.com/api/detect', options);
+   
+   var resultDetection = await resultDetectionRaw.body;
+   resultDetection = await JSON.parse(resultDetection);
+//console.log(resultDetection);
+
   if (resultCloudinary) {
-    res.json(resultCloudinary);
+    res.json({result : resultDetection, url : resultCloudinary.url});
   } else {
     res.json({result: false, message: 'erreur cloudinary'});
   }
